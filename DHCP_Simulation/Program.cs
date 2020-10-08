@@ -82,6 +82,60 @@ namespace DHCP_Simulation
             }
             return adatok[0] + '.' + adatok[1] + '.' + adatok[2] + '.' + Convert.ToString(okt4);
         }
+        static void Feladat(string parancs)
+        {
+            if (parancs.Contains("request"))
+            {
+                string[] a = parancs.Split(';');
+                string mac = a[1];
+
+                if (dhcp.ContainsKey(mac))
+                {
+                    Console.WriteLine($"DHCP {mac} ---> {dhcp[mac]}");
+                }
+                else
+                {
+                    if (reserved.ContainsKey(mac))
+                    {
+                        Console.WriteLine($"Res. {mac} ---> {reserved[mac]}");
+                        dhcp.Add(mac, reserved[mac]);
+                    }
+                    else
+                    {
+                        string indulo = "192.168.10.100";
+                        int okt4 = 100;
+
+                        while (okt4 < 200 && (dhcp.ContainsValue(indulo) ||
+                            reserved.ContainsValue(indulo) ||
+                            excluded.Contains(indulo)))
+                        {
+                            okt4++;
+                            indulo = CimEgyenlNo(indulo);
+                        }
+                        if (okt4 < 200)
+                        {
+                            Console.WriteLine($"Kiosztott  {mac} ---> {indulo}");
+                            dhcp.Add(mac, indulo);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"{mac} nincs IP");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("Nem oké");
+            }
+        }
+        static void Feladatok()
+        {
+            foreach (var command in commands)
+            {
+                Feladat(command);
+            }
+        }
         static void Main(string[] args)
         {
             BeolvasList(excluded, "excluded.csv");
@@ -89,10 +143,13 @@ namespace DHCP_Simulation
             BeolvasDictionary(dhcp, "dhcp.csv");
             BeolvasDictionary(reserved, "reserved.csv");
 
-            foreach (var e in commands)
-            {
-                Console.WriteLine(e);
-            }
+
+            Feladatok();
+
+            //foreach (var e in commands)
+            //{
+            //    Console.WriteLine(e);
+            //}
             Console.WriteLine("\nVége...........");
             Console.ReadLine();
         }
